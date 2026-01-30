@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-Frame-Options" content="ALLOWALL">
+    <meta http-equiv="Content-Security-Policy" content="frame-ancestors *">
+    <title>Calorie Counter</title>
+    <link href="https://fonts.cdnfonts.com/css/opendyslexic" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'OpenDyslexic', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #1a1a1a;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+        }
+
+        .container {
+            width: 260px;
+            height: 260px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .progress-ring {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .progress-circle {
+            width: 100%;
+            height: 100%;
+        }
+
+        .content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .calories-consumed {
+            font-size: 56px;
+            font-weight: bold;
+            color: white;
+            line-height: 1;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .calories-goal {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.65);
+            margin-bottom: 2px;
+            letter-spacing: 0.3px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        input {
+            width: 70px;
+            padding: 8px 6px;
+            border: none;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+            color: #1a1a1a;
+            font-family: 'OpenDyslexic', sans-serif;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        input:focus {
+            outline: none;
+            background: white;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        input::placeholder {
+            color: #ccc;
+        }
+
+        button {
+            padding: 8px 14px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #667eea;
+            border: none;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'OpenDyslexic', sans-serif;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        button:hover {
+            background: white;
+            transform: scale(1.05);
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .remaining {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 2px;
+            letter-spacing: 0.2px;
+        }
+
+        .remaining-value {
+            font-weight: bold;
+            color: white;
+        }
+
+        .reset-btn {
+            background: rgba(255, 71, 87, 0.9);
+            color: white;
+            font-size: 10px;
+            padding: 6px 12px;
+            margin-top: 2px;
+        }
+
+        .reset-btn:hover {
+            background: #ff4757;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="progress-ring">
+            <svg class="progress-circle" viewBox="0 0 260 260">
+                <circle cx="130" cy="130" r="124" fill="none" stroke="rgba(255, 255, 255, 0.15)" stroke-width="8"/>
+                <circle id="progressCircle" cx="130" cy="130" r="124" fill="none" stroke="white" 
+                        stroke-width="8" stroke-linecap="round"
+                        transform="rotate(-90 130 130)"
+                        stroke-dasharray="779" stroke-dashoffset="779"/>
+            </svg>
+        </div>
+        
+        <div class="content">
+            <div class="calories-consumed" id="consumed">0</div>
+            <div class="calories-goal">of 1700 cal</div>
+            
+            <div class="input-group">
+                <input type="number" id="mealCalories" placeholder="000" min="0">
+                <button onclick="addCalories()">Add</button>
+            </div>
+            
+            <div class="remaining">
+                <span class="remaining-value" id="remaining">1700</span> left
+            </div>
+            
+            <button class="reset-btn" onclick="resetDay()">Reset</button>
+        </div>
+    </div>
+
+    <script>
+        const DAILY_GOAL = 1700;
+        let totalCalories = 0;
+
+        function init() {
+            loadData();
+            updateUI();
+        }
+
+        function addCalories() {
+            const caloriesInput = document.getElementById('mealCalories');
+            const calories = parseInt(caloriesInput.value);
+
+            if (!calories || calories <= 0) {
+                return;
+            }
+
+            totalCalories += calories;
+            caloriesInput.value = '';
+
+            saveData();
+            updateUI();
+        }
+
+        function resetDay() {
+            totalCalories = 0;
+            saveData();
+            updateUI();
+        }
+
+        function updateUI() {
+            document.getElementById('consumed').textContent = totalCalories;
+            document.getElementById('remaining').textContent = Math.max(0, DAILY_GOAL - totalCalories);
+
+            const progress = Math.min((totalCalories / DAILY_GOAL) * 779, 779);
+            const circle = document.getElementById('progressCircle');
+            circle.style.strokeDashoffset = 779 - progress;
+
+            if (totalCalories > DAILY_GOAL) {
+                circle.style.stroke = '#ff4757';
+            } else {
+                circle.style.stroke = 'white';
+            }
+        }
+
+        function saveData() {
+            const today = new Date().toDateString();
+            localStorage.setItem('calorieData', JSON.stringify({
+                date: today,
+                total: totalCalories
+            }));
+        }
+
+        function loadData() {
+            const today = new Date().toDateString();
+            const saved = localStorage.getItem('calorieData');
+            
+            if (saved) {
+                const data = JSON.parse(saved);
+                if (data.date === today) {
+                    totalCalories = data.total || 0;
+                }
+            }
+        }
+
+        document.getElementById('mealCalories').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addCalories();
+            }
+        });
+
+        init();
+    </script>
+</body>
+</html>
