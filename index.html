@@ -7,7 +7,7 @@
     <meta http-equiv="Content-Security-Policy" content="frame-ancestors *">
     <title>Calorie Counter</title>
     <link href="https://fonts.cdnfonts.com/css/opendyslexic" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0"></script>
     <style>
         * {
             margin: 0;
@@ -314,18 +314,20 @@
                     .from('calorie_data')
                     .select('total')
                     .eq('user_id', userId)
-                    .eq('date', today)
-                    .single();
+                    .eq('date', today);
                 
                 console.log('Load result - data:', data, 'error:', error);
                 
-                if (data) {
-                    totalCalories = data.total || 0;
+                if (error) {
+                    console.error('Error loading:', JSON.stringify(error, null, 2));
+                } else if (data && data.length > 0) {
+                    totalCalories = data[0].total || 0;
                     console.log('Loaded calories:', totalCalories);
                     updateUI();
-                } else if (error && error.code !== 'PGRST116') {
-                    console.error('Error loading:', JSON.stringify(error, null, 2));
-                    console.error('Full error object:', error);
+                } else {
+                    console.log('No data found for today, starting at 0');
+                    totalCalories = 0;
+                    updateUI();
                 }
             } catch (err) {
                 console.error('Catch error loading:', err);
