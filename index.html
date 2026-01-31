@@ -262,16 +262,35 @@
             }
             
             try {
-                const { error } = await supabaseClient
+                // First try to update existing record
+                const { data: existing } = await supabaseClient
                     .from('calorie_data')
-                    .upsert({ 
-                        user_id: userId,
-                        date: today,
-                        total: totalCalories
-                    });
+                    .select('id')
+                    .eq('user_id', userId)
+                    .eq('date', today)
+                    .single();
                 
-                if (error) {
-                    console.error('Error saving:', JSON.stringify(error, null, 2));
+                let result;
+                if (existing) {
+                    // Update existing record
+                    result = await supabaseClient
+                        .from('calorie_data')
+                        .update({ total: totalCalories })
+                        .eq('user_id', userId)
+                        .eq('date', today);
+                } else {
+                    // Insert new record
+                    result = await supabaseClient
+                        .from('calorie_data')
+                        .insert({ 
+                            user_id: userId,
+                            date: today,
+                            total: totalCalories
+                        });
+                }
+                
+                if (result.error) {
+                    console.error('Error saving:', JSON.stringify(result.error, null, 2));
                 } else {
                     console.log('Saved successfully:', totalCalories);
                 }
