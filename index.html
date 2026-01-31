@@ -204,11 +204,14 @@
             // You can change this to any unique string
             userId = 'idleflux_user';
             
+            console.log('Init with userId:', userId);
+            
             await loadData();
             updateUI();
             
             // Auto-sync every 5 seconds
             setInterval(async () => {
+                console.log('Auto-syncing...');
                 await loadData();
             }, 5000);
         }
@@ -221,6 +224,7 @@
                 return;
             }
 
+            console.log('Adding calories:', calories);
             totalCalories += calories;
             caloriesInput.value = '';
 
@@ -279,6 +283,8 @@
         async function loadData() {
             const today = new Date().toDateString();
             
+            console.log('Loading data for:', today, 'userId:', userId);
+            
             if (!supabaseClient) {
                 console.error('Supabase not initialized');
                 return;
@@ -292,8 +298,11 @@
                     .eq('date', today)
                     .single();
                 
+                console.log('Load result - data:', data, 'error:', error);
+                
                 if (data) {
                     totalCalories = data.total || 0;
+                    console.log('Loaded calories:', totalCalories);
                     updateUI();
                 } else if (error && error.code !== 'PGRST116') {
                     console.error('Error loading:', JSON.stringify(error, null, 2));
